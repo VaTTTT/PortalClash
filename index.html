@@ -2,22 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Clash</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vertical Portal Clash</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="game-container">
-        <h1>Portal Clash</h1>
-        <div id="ui-bar">
-            <button id="spawn-btn">Summon Monster (Cooldown: <span id="cooldown">0</span>s)</button>
+    <div id="app-container">
+        
+        <div id="main-menu" class="screen-overlay">
+            <h1>Portal Clash</h1>
+            <button id="btn-new-game">New Game</button>
+            <button id="btn-continue" disabled>Continue</button>
+            <button class="btn-open-shop" disabled>Shop</button>
         </div>
-        <canvas id="gameCanvas" width="800" height="400"></canvas>
-        <div id="game-over-screen" class="hidden">
-            <h2 id="result-message"></h2>
-            <button onclick="location.reload()">Play Again</button>
-        </div>
-    </div>
-    <script src="game.js"></script>
-</body>
-</html>
+
+        <div id="shop-screen" class="screen-overlay hidden">
+            <h1 style="color: #f1c40f;">Shop (Gold: <span id="shop-gold">0</span>)</h1>
+            <div id="shop-content">
+                <div class="shop-section">
+                    <h3>Unlock Monsters</h3>
+                    <button id="shop-unlock-white" class="shop-btn">White (5 Gold)</button>
+                    <button id="shop-unlock-green" class="shop-btn">Green (10 Gold)</button>
+                    <button id="shop-unlock-blue" class="shop-btn">Blue (20 Gold)</button>
+                </div>
+                <div class="shop-section">
+                    <h3>Upgrade Monsters (1 Gold/Lvl)</h3>
+                    <p style="font-size: 12px; margin-bottom: 5px;">+10% Base HP & Damage</p>
+                    <button id="shop-upg-gray" class="shop-btn">Gray [Lvl 0/10]</button>
+                    <button id="shop-upg-white" class="shop-btn">White [Lvl 0/10]</button>
+                    <button id="shop-upg-green" class="shop-btn">Green [Lvl 0/10]</button>
+                    <button id="shop-upg-blue" class="shop-btn">Blue [Lvl 0/10]</button>
+                </div>
+                <div class="shop-section">
+                    <h3>Portal Upgrades (10 Gold/Lvl)</h3>
