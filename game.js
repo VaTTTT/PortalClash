@@ -36,22 +36,37 @@ const STATS = {
     blue:  { cost: 20, hp: 20, dmg: 5, color: '#2980b9', radius: 22, unlock: 20 }
 };
 
-// --- SAVE SYSTEM ---
+// --- SAFE SAVE SYSTEM (Fixes the mobile crash) ---
 function saveGame() {
-    localStorage.setItem('portalClashSaveV2', JSON.stringify(state));
+    try {
+        localStorage.setItem('portalClashSaveV2', JSON.stringify(state));
+    } catch (e) {
+        console.warn("Storage disabled by mobile browser, skipping save.");
+    }
     checkContinues();
 }
+
 function loadGame() {
-    const saved = localStorage.getItem('portalClashSaveV2');
-    if (saved) {
-        let parsed = JSON.parse(saved);
-        state = { ...state, ...parsed }; // Merge to preserve new keys if updated
+    try {
+        const saved = localStorage.getItem('portalClashSaveV2');
+        if (saved) {
+            let parsed = JSON.parse(saved);
+            state = { ...state, ...parsed }; 
+        }
+    } catch (e) {
+        console.warn("Storage disabled by mobile browser.");
     }
 }
+
 function checkContinues() {
-    const hasSave = localStorage.getItem('portalClashSaveV2') !== null;
-    document.getElementById('btn-continue').disabled = !hasSave;
-    document.querySelectorAll('.btn-open-shop').forEach(b => b.disabled = !hasSave);
+    try {
+        const hasSave = localStorage.getItem('portalClashSaveV2') !== null;
+        document.getElementById('btn-continue').disabled = !hasSave;
+        document.querySelectorAll('.btn-open-shop').forEach(b => b.disabled = !hasSave);
+    } catch (e) {
+        document.getElementById('btn-continue').disabled = true;
+        document.querySelectorAll('.btn-open-shop').forEach(b => b.disabled = true);
+    }
 }
 
 // --- PORTAL & MONSTER CLASSES ---
@@ -82,7 +97,6 @@ class Monster {
         this.type = type;
         
         const base = STATS[type];
-        // Player gets upgraded stats, AI gets base stats
         const multi = side === 'player' ? 1 + (0.1 * state.upgrades[type]) : 1;
         
         this.maxHealth = base.hp * multi;
@@ -112,7 +126,6 @@ class Monster {
 function startGame() {
     Object.values(menus).forEach(m => m.classList.add('hidden'));
     
-    // Setup Mana Economy based on permanent upgrades
     playerMana = 10; 
     playerRegen = 1 + (state.manaRegenLevel * 0.5); 
     playerUpgradeCost = 15;
@@ -138,7 +151,7 @@ function spawnMonster(type) {
     }
 }
 
-// In-Game UI
+// In-Game UI Buttons
 ['gray', 'white', 'green', 'blue'].forEach(type => {
     document.getElementById(`btn-${type}`).onclick = () => spawnMonster(type);
 });
@@ -161,7 +174,6 @@ function updateUI() {
     document.getElementById('enemy-regen').innerText = actualEnemyRegenRate ? actualEnemyRegenRate.toFixed(1) : "1.0";
     document.getElementById('upgrade-cost').innerText = playerUpgradeCost;
 
-    // Disable buttons if not unlocked or not enough mana
     document.getElementById('btn-gray').disabled = playerMana < STATS.gray.cost;
     ['white', 'green', 'blue'].forEach(type => {
         let btn = document.getElementById(`btn-${type}`);
@@ -217,11 +229,9 @@ function gameLoop() {
 
     if (frameCount % 60 === 0) {
         playerMana += playerRegen;
-        // Base AI scaling to 10%
         actualEnemyRegenRate = enemyRegen * Math.pow(1.10, state.level - 1);
         enemyMana += actualEnemyRegenRate;
         
-        // Permanent HP Regen Tick
         playerPortal.health = Math.min(playerPortal.maxHealth, playerPortal.health + (state.hpRegenLevel * 0.5));
         
         updateUI(); processEnemyAI();
@@ -257,7 +267,6 @@ function gameLoop() {
     } else if (enemyPortal.health <= 0) {
         isGameRunning = false;
         
-        // Reward Logic
         let goldEarned = playerPortal.health >= playerPortal.maxHealth ? 2 : 1;
         state.gold += goldEarned;
         state.level++;
@@ -275,7 +284,6 @@ function gameLoop() {
 function updateShopUI() {
     document.getElementById('shop-gold').innerText = state.gold;
 
-    // Unlocks
     ['white', 'green', 'blue'].forEach(type => {
         let btn = document.getElementById(`shop-unlock-${type}`);
         if (state.unlocks[type]) {
@@ -285,7 +293,6 @@ function updateShopUI() {
         }
     });
 
-    // Upgrades
     ['gray', 'white', 'green', 'blue'].forEach(type => {
         let btn = document.getElementById(`shop-upg-${type}`);
         let lvl = state.upgrades[type];
@@ -297,7 +304,6 @@ function updateShopUI() {
         }
     });
 
-    // Portal
     let btnHp = document.getElementById('shop-upg-hp');
     if (state.hpRegenLevel >= 10) { btnHp.innerText = "Max Level"; btnHp.disabled = true; }
     else { btnHp.innerText = `HP Regen [Lvl ${state.hpRegenLevel}/10]`; btnHp.disabled = state.gold < 10; }
@@ -307,7 +313,6 @@ function updateShopUI() {
     else { btnMana.innerText = `Mana Regen [Lvl ${state.manaRegenLevel}/10]`; btnMana.disabled = state.gold < 10; }
 }
 
-// Shop Events
 ['white', 'green', 'blue'].forEach(type => {
     document.getElementById(`shop-unlock-${type}`).onclick = () => {
         if (state.gold >= STATS[type].unlock) { state.gold -= STATS[type].unlock; state.unlocks[type] = true; saveGame(); updateShopUI(); }
@@ -346,7 +351,6 @@ document.getElementById('btn-close-shop').onclick = () => {
     menus.main.classList.remove('hidden');
     checkContinues();
 };
-
 document.querySelectorAll('.btn-to-menu').forEach(btn => {
     btn.onclick = () => {
         Object.values(menus).forEach(m => m.classList.add('hidden'));
