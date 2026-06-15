@@ -35,3 +35,56 @@
                 </div>
                 <div class="shop-section">
                     <h3>Portal Upgrades (10 Gold/Lvl)</h3>
+                    <p style="font-size: 12px; margin-bottom: 5px;">+0.5 Regen per Second</p>
+                    <button id="shop-upg-hp" class="shop-btn">HP Regen [Lvl 0/10]</button>
+                    <button id="shop-upg-mana" class="shop-btn">Mana Regen [Lvl 0/10]</button>
+                </div>
+            </div>
+            <button id="btn-close-shop" style="background-color: #e74c3c; margin-top: 20px;">Back</button>
+        </div>
+
+        <div id="level-complete-screen" class="screen-overlay hidden">
+            <h1 style="color: #2ecc71;">Level Cleared!</h1>
+            <h2 id="gold-earned-msg" style="color: #f1c40f; margin-bottom: 20px;">+1 Gold</h2>
+            <button id="btn-next-level">Next Level</button>
+            <button class="btn-open-shop">Shop</button>
+            <button class="btn-to-menu">Main Menu</button>
+        </div>
+
+        <div id="game-over-screen" class="screen-overlay hidden">
+            <h1 id="result-message" style="color: #e74c3c;">Defeat!</h1>
+            <button id="btn-retry">Retry Level</button>
+            <button class="btn-to-menu">Main Menu</button>
+        </div>
+
+        <div id="top-bar">
+            <div class="mana-info">
+                <span>Mana: <strong id="player-mana">10</strong> (<span id="player-regen">1</span>/s)</span>
+                <span style="color: #2ecc71;">HP Regen: <strong id="player-hp-regen">0</strong>/s</span>
+                <span style="color: #f39c12; font-weight: bold;">Level: <span id="level-display">1</span> | Gold: <span id="gold-display">0</span></span>
+            </div>
+            <div class="enemy-info">
+                <span>Enemy HP: <strong id="enemy-hp">100</strong></span>
+                <span>Mana: <strong id="enemy-regen">1.0</strong>/s</span>
+                <span id="ai-status" style="color: #aaa; font-size: 12px;">AI: Normal</span>
+            </div>
+        </div>
+
+        <div id="middle-section">
+            <canvas id="gameCanvas" width="400" height="1200"></canvas>
+        </div>
+
+        <div id="bottom-bar">
+            <div class="button-row">
+                <button id="btn-gray" class="summon-btn">Gray<br>(3 Mana)</button>
+                <button id="btn-white" class="summon-btn">White<br>(5 Mana)</button>
+                <button id="btn-green" class="summon-btn">Green<br>(10 Mana)</button>
+                <button id="btn-blue" class="summon-btn">Blue<br>(20 Mana)</button>
+            </div>
+            <button id="btn-upgrade">Temp Mana Boost (Cost: <span id="upgrade-cost">15</span>)</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
+    
