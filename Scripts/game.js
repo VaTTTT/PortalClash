@@ -45,12 +45,15 @@ const STATS = {
     }
 };
 
-// Sprite Loading for Rat (Walk, Attack, and Death Sheets)
+// Sprite Loading for Rat (Walk, Attack, Hurt, and Death Sheets)
 const ratWalkImg = new Image();
 ratWalkImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Walk_with_shadow.png';
 
 const ratAttackImg = new Image();
 ratAttackImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Attack_with_shadow.png';
+
+const ratHurtImg = new Image();
+ratHurtImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Hurt_with_shadow.png';
 
 const ratDeathImg = new Image();
 ratDeathImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Death_with_shadow.png';
@@ -59,10 +62,11 @@ let assetsLoaded = 0;
 let isSpriteLoaded = false;
 const checkAssetsLoaded = () => {
     assetsLoaded++;
-    if (assetsLoaded === 3) isSpriteLoaded = true;
+    if (assetsLoaded === 4) isSpriteLoaded = true;
 };
 ratWalkImg.onload = checkAssetsLoaded;
 ratAttackImg.onload = checkAssetsLoaded;
+ratHurtImg.onload = checkAssetsLoaded;
 ratDeathImg.onload = checkAssetsLoaded;
 
 // --- SAFE SAVE SYSTEM ---
@@ -115,6 +119,10 @@ class Portal {
         this.radius = 50;
         this.color = side === 'player' ? '#8e44ad' : '#c0392b';
     }
+    takeDamage(amount) {
+        this.health -= amount;
+        // Trigger damage variables or screen shake if desired here
+    }
     draw() {
         ctx.fillStyle = this.color;
         if (this.side === 'enemy') ctx.fillRect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
@@ -158,6 +166,16 @@ class Monster {
         this.deathDelayTimer = 0;
     }
 
+    takeDamage(amount) {
+        this.health -= amount;
+        if (this.health > 0) {
+            // Trigger hurt flinch (hit stun) and reset frame timers
+            this.state = 'hurt';
+            this.frame = 0;
+            this.frameTimer = 0;
+        }
+    }
+
     update() {
         if (this.health <= 0) {
             const previousState = this.state;
@@ -189,6 +207,23 @@ class Monster {
             return;
         }
 
+        // Hurt flinch / hit stun logic (4 frames)
+        if (this.state === 'hurt') {
+            this.frameTimer++;
+            if (this.frameTimer >= this.animationSpeed) {
+                if (this.frame < 3) {
+                    this.frame++;
+                    this.frameTimer = 0;
+                } else {
+                    // Hit stun finishes, reset to walk so update checks can select correct state next loop
+                    this.state = 'walk';
+                    this.frame = 0;
+                    this.frameTimer = 0;
+                }
+            }
+            return; // Interrupt walking and attacking during hit stun
+        }
+
         const previousState = this.state;
         if (this.isFighting && this.target) {
             this.state = 'attack';
@@ -212,7 +247,7 @@ class Monster {
         if (this.state === 'attack') {
             this.attackTimer++;
             if (this.attackTimer >= 60) {
-                this.target.health -= this.damage;
+                this.target.takeDamage(this.damage);
                 this.attackTimer = 0;
             }
             
@@ -240,6 +275,7 @@ class Monster {
             let img = ratWalkImg;
             if (this.state === 'attack') img = ratAttackImg;
             else if (this.state === 'death') img = ratDeathImg;
+            else if (this.state === 'hurt') img = ratHurtImg;
             
             const sx = this.frame * this.spriteWidth;
             const sy = (this.side === 'player' ? 1 : 0) * this.spriteHeight;
