@@ -30,7 +30,19 @@ let state = {
 
 // Base Stats (Restricted to Rat T1 MVP)
 const STATS = {
-    rat: { cost: 3, hp: 20, dmg: 5, range: 15, speed: 1.0, color: '#8d6e63', radius: 30 }
+    rat: { 
+        cost: 3, 
+        hp: 20, 
+        dmg: 5, 
+        range: 15, 
+        speed: 1.0, 
+        color: '#8d6e63', 
+        radius: 30,
+        spriteWidth: 128,
+        spriteHeight: 128,
+        drawWidth: 200,
+        drawHeight: 200
+    }
 };
 
 // Sprite Loading for Rat
@@ -119,10 +131,14 @@ class Monster {
         this.target = null;
         this.attackTimer = 0;
 
-        // Animation Properties
+        // Animation & Sprite Properties
         this.frame = 0;
         this.frameTimer = 0;
         this.animationSpeed = 6;
+        this.spriteWidth = base.spriteWidth || 64;
+        this.spriteHeight = base.spriteHeight || 64;
+        this.drawWidth = base.drawWidth || 40;
+        this.drawHeight = base.drawHeight || 40;
     }
 
     update() {
@@ -150,9 +166,9 @@ class Monster {
 
     draw() {
         if (isSpriteLoaded) {
-            const sx = this.frame * 64;
-            const sy = (this.side === 'player' ? 1 : 0) * 64;
-            ctx.drawImage(ratSpriteImg, sx, sy, 64, 64, this.x - 100, this.y - 100, 200, 200);
+            const sx = this.frame * this.spriteWidth;
+            const sy = (this.side === 'player' ? 1 : 0) * this.spriteHeight;
+            ctx.drawImage(ratSpriteImg, sx, sy, this.spriteWidth, this.spriteHeight, this.x - this.drawWidth / 2, this.y - this.drawHeight / 2, this.drawWidth, this.drawHeight);
         } else {
             ctx.fillStyle = this.color; ctx.strokeStyle = '#000';
             if (this.side === 'enemy') {
