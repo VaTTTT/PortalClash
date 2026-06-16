@@ -74,6 +74,7 @@ button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 .summon-btn { flex: 1; max-width: 200px; padding: 12px 5px; font-size: 15px; }
 #btn-rat { background-color: #8d6e63; color: white; }
+#btn-skeleton { background-color: #b0bec5; color: black; }
 
 #btn-upgrade { width: 100%; padding: 12px; background-color: #9b59b6; font-size: 16px; }
 .hidden { display: none !important; }
