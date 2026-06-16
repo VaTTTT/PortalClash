@@ -67,16 +67,13 @@ canvas {
     background-color: #34495e; padding: 10px;
     border-top: 2px solid #000; z-index: 10; flex-shrink: 0;
 }
-.button-row { display: flex; justify-content: space-between; gap: 5px; margin-bottom: 10px; }
+.button-row { display: flex; justify-content: center; gap: 5px; margin-bottom: 10px; }
 button { font-weight: bold; border: 2px solid #111; border-radius: 5px; cursor: pointer; color: white; transition: transform 0.1s; }
 button:active { transform: scale(0.95); }
 button:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-.summon-btn { flex: 1; padding: 10px 5px; font-size: 14px; }
-#btn-gray { background-color: gray; }
-#btn-white { background-color: white; color: black; }
-#btn-green { background-color: #27ae60; }
-#btn-blue { background-color: #2980b9; }
+.summon-btn { flex: 1; max-width: 200px; padding: 12px 5px; font-size: 15px; }
+#btn-rat { background-color: #8d6e63; color: white; }
 
 #btn-upgrade { width: 100%; padding: 12px; background-color: #9b59b6; font-size: 16px; }
 .hidden { display: none !important; }
