@@ -30,7 +30,7 @@ let state = {
 
 // Base Stats (Restricted to Rat T1 MVP)
 const STATS = {
-    rat: { cost: 3, hp: 20, dmg: 5, range: 15, speed: 2.2, color: '#8d6e63', radius: 12 }
+    rat: { cost: 3, hp: 20, dmg: 5, range: 15, speed: 1.0, color: '#8d6e63', radius: 30 }
 };
 
 // Sprite Loading for Rat
@@ -152,7 +152,7 @@ class Monster {
         if (isSpriteLoaded) {
             const sx = this.frame * 64;
             const sy = (this.side === 'player' ? 1 : 0) * 64;
-            ctx.drawImage(ratSpriteImg, sx, sy, 64, 64, this.x - 20, this.y - 20, 40, 40);
+            ctx.drawImage(ratSpriteImg, sx, sy, 64, 64, this.x - 100, this.y - 100, 200, 200);
         } else {
             ctx.fillStyle = this.color; ctx.strokeStyle = '#000';
             if (this.side === 'enemy') {
@@ -163,7 +163,7 @@ class Monster {
             }
             // Fallback emoji
             ctx.fillStyle = '#000';
-            ctx.font = '14px Arial';
+            ctx.font = '24px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.fillText('🐀', this.x, this.y);
@@ -171,9 +171,9 @@ class Monster {
         
         // Draw Health Bar
         ctx.fillStyle = 'red';
-        ctx.fillRect(this.x - 15, this.y - this.radius - 12, 30, 5);
+        ctx.fillRect(this.x - 25, this.y - this.radius - 15, 50, 6);
         ctx.fillStyle = '#2ecc71';
-        ctx.fillRect(this.x - 15, this.y - this.radius - 12, 30 * (Math.max(0, this.health) / this.maxHealth), 5);
+        ctx.fillRect(this.x - 25, this.y - this.radius - 15, 50 * (Math.max(0, this.health) / this.maxHealth), 6);
     }
 }
 
