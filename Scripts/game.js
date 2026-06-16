@@ -35,7 +35,7 @@ const STATS = {
         hp: 20, 
         dmg: 5, 
         range: 15, 
-        speed: 1.0, 
+        speed: 0.5, 
         color: '#8d6e63', 
         radius: 30,
         spriteWidth: 128,
@@ -45,11 +45,21 @@ const STATS = {
     }
 };
 
-// Sprite Loading for Rat
-const ratSpriteImg = new Image();
-ratSpriteImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Walk_with_shadow.png';
+// Sprite Loading for Rat (Walk and Attack Sheets)
+const ratWalkImg = new Image();
+ratWalkImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Walk_with_shadow.png';
+
+const ratAttackImg = new Image();
+ratAttackImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Attack_with_shadow.png';
+
+let assetsLoaded = 0;
 let isSpriteLoaded = false;
-ratSpriteImg.onload = () => { isSpriteLoaded = true; };
+const checkAssetsLoaded = () => {
+    assetsLoaded++;
+    if (assetsLoaded === 2) isSpriteLoaded = true;
+};
+ratWalkImg.onload = checkAssetsLoaded;
+ratAttackImg.onload = checkAssetsLoaded;
 
 // --- SAFE SAVE SYSTEM ---
 function saveGame() {
@@ -132,6 +142,7 @@ class Monster {
         this.attackTimer = 0;
 
         // Animation & Sprite Properties
+        this.state = 'walk';
         this.frame = 0;
         this.frameTimer = 0;
         this.animationSpeed = 6;
@@ -142,20 +153,37 @@ class Monster {
     }
 
     update() {
+        const previousState = this.state;
         if (this.isFighting && this.target) {
+            this.state = 'attack';
+        } else {
+            this.state = 'walk';
+        }
+
+        // Reset animation frame on state transitions to prevent out-of-bounds frame indices
+        if (this.state !== previousState) {
+            this.frame = 0;
+            this.frameTimer = 0;
+        }
+
+        if (this.state === 'attack') {
             this.attackTimer++;
             if (this.attackTimer >= 60) {
                 this.target.health -= this.damage;
                 this.attackTimer = 0;
             }
-            // Reset frame/timer when stationary and attacking
-            this.frame = 0;
-            this.frameTimer = 0;
+            
+            // Advance animation frame when attacking (8 frames)
+            this.frameTimer++;
+            if (this.frameTimer >= this.animationSpeed) {
+                this.frame = (this.frame + 1) % 8;
+                this.frameTimer = 0;
+            }
         } else {
             this.y += this.speed;
             this.attackTimer = 0;
             
-            // Advance animation frame when moving
+            // Advance animation frame when moving (6 frames)
             this.frameTimer++;
             if (this.frameTimer >= this.animationSpeed) {
                 this.frame = (this.frame + 1) % 6;
@@ -166,9 +194,10 @@ class Monster {
 
     draw() {
         if (isSpriteLoaded) {
+            const img = this.state === 'attack' ? ratAttackImg : ratWalkImg;
             const sx = this.frame * this.spriteWidth;
             const sy = (this.side === 'player' ? 1 : 0) * this.spriteHeight;
-            ctx.drawImage(ratSpriteImg, sx, sy, this.spriteWidth, this.spriteHeight, this.x - this.drawWidth / 2, this.y - this.drawHeight / 2, this.drawWidth, this.drawHeight);
+            ctx.drawImage(img, sx, sy, this.spriteWidth, this.spriteHeight, this.x - this.drawWidth / 2, this.y - this.drawHeight / 2, this.drawWidth, this.drawHeight);
         } else {
             ctx.fillStyle = this.color; ctx.strokeStyle = '#000';
             if (this.side === 'enemy') {
