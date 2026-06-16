@@ -147,14 +147,15 @@ class Monster {
 
         // Animation & Sprite Properties
         this.state = 'walk';
-        this.frame = 0;
-        this.frameTimer = 0;
+        this.frame = Math.floor(Math.random() * 6); // Desynchronize initial walk frame phase
+        this.frameTimer = Math.floor(Math.random() * 6); // Desynchronize timer phase
         this.animationSpeed = 6;
         this.spriteWidth = base.spriteWidth || 64;
         this.spriteHeight = base.spriteHeight || 64;
         this.drawWidth = base.drawWidth || 40;
         this.drawHeight = base.drawHeight || 40;
         this.isDeadFinished = false;
+        this.deathDelayTimer = 0;
     }
 
     update() {
@@ -168,17 +169,22 @@ class Monster {
             if (this.state !== previousState) {
                 this.frame = 0;
                 this.frameTimer = 0;
+                this.deathDelayTimer = 0;
             }
             
-            // Advance animation frame when dying (5 frames)
-            this.frameTimer++;
-            if (this.frameTimer >= this.animationSpeed) {
-                if (this.frame < 4) {
+            if (this.frame < 4) {
+                // Advance animation frame when dying (5 frames)
+                this.frameTimer++;
+                if (this.frameTimer >= this.animationSpeed) {
                     this.frame++;
-                } else {
+                    this.frameTimer = 0;
+                }
+            } else {
+                // Final frame (lying dead). Hold for 1 second (60 frames) before disappearing.
+                this.deathDelayTimer++;
+                if (this.deathDelayTimer >= 60) {
                     this.isDeadFinished = true;
                 }
-                this.frameTimer = 0;
             }
             return;
         }
@@ -192,8 +198,15 @@ class Monster {
 
         // Reset animation frame on state transitions to prevent out-of-bounds frame indices
         if (this.state !== previousState) {
-            this.frame = 0;
-            this.frameTimer = 0;
+            if (this.state === 'attack') {
+                this.frame = Math.floor(Math.random() * 8);
+                this.frameTimer = Math.floor(Math.random() * this.animationSpeed);
+                // Offset the initial attackTimer slightly to desynchronize attack hits
+                this.attackTimer = Math.floor(Math.random() * 15);
+            } else {
+                this.frame = Math.floor(Math.random() * 6);
+                this.frameTimer = Math.floor(Math.random() * this.animationSpeed);
+            }
         }
 
         if (this.state === 'attack') {
