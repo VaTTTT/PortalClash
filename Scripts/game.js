@@ -45,21 +45,25 @@ const STATS = {
     }
 };
 
-// Sprite Loading for Rat (Walk and Attack Sheets)
+// Sprite Loading for Rat (Walk, Attack, and Death Sheets)
 const ratWalkImg = new Image();
 ratWalkImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Walk_with_shadow.png';
 
 const ratAttackImg = new Image();
 ratAttackImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Attack_with_shadow.png';
 
+const ratDeathImg = new Image();
+ratDeathImg.src = 'Assets/Sprites/Units/Rat_LVL1/Rat1_Death_with_shadow.png';
+
 let assetsLoaded = 0;
 let isSpriteLoaded = false;
 const checkAssetsLoaded = () => {
     assetsLoaded++;
-    if (assetsLoaded === 2) isSpriteLoaded = true;
+    if (assetsLoaded === 3) isSpriteLoaded = true;
 };
 ratWalkImg.onload = checkAssetsLoaded;
 ratAttackImg.onload = checkAssetsLoaded;
+ratDeathImg.onload = checkAssetsLoaded;
 
 // --- SAFE SAVE SYSTEM ---
 function saveGame() {
@@ -150,9 +154,35 @@ class Monster {
         this.spriteHeight = base.spriteHeight || 64;
         this.drawWidth = base.drawWidth || 40;
         this.drawHeight = base.drawHeight || 40;
+        this.isDeadFinished = false;
     }
 
     update() {
+        if (this.health <= 0) {
+            const previousState = this.state;
+            this.state = 'death';
+            this.isFighting = false;
+            this.target = null;
+            
+            // Reset frame/timer on transition to death state
+            if (this.state !== previousState) {
+                this.frame = 0;
+                this.frameTimer = 0;
+            }
+            
+            // Advance animation frame when dying (5 frames)
+            this.frameTimer++;
+            if (this.frameTimer >= this.animationSpeed) {
+                if (this.frame < 4) {
+                    this.frame++;
+                } else {
+                    this.isDeadFinished = true;
+                }
+                this.frameTimer = 0;
+            }
+            return;
+        }
+
         const previousState = this.state;
         if (this.isFighting && this.target) {
             this.state = 'attack';
@@ -194,7 +224,10 @@ class Monster {
 
     draw() {
         if (isSpriteLoaded) {
-            const img = this.state === 'attack' ? ratAttackImg : ratWalkImg;
+            let img = ratWalkImg;
+            if (this.state === 'attack') img = ratAttackImg;
+            else if (this.state === 'death') img = ratDeathImg;
+            
             const sx = this.frame * this.spriteWidth;
             const sy = (this.side === 'player' ? 1 : 0) * this.spriteHeight;
             ctx.drawImage(img, sx, sy, this.spriteWidth, this.spriteHeight, this.x - this.drawWidth / 2, this.y - this.drawHeight / 2, this.drawWidth, this.drawHeight);
@@ -211,14 +244,16 @@ class Monster {
             ctx.font = '24px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText('🐀', this.x, this.y);
+            ctx.fillText(this.state === 'death' ? '💀' : '🐀', this.x, this.y);
         }
         
-        // Draw Health Bar
-        ctx.fillStyle = 'red';
-        ctx.fillRect(this.x - 25, this.y - this.radius - 15, 50, 6);
-        ctx.fillStyle = '#2ecc71';
-        ctx.fillRect(this.x - 25, this.y - this.radius - 15, 50 * (Math.max(0, this.health) / this.maxHealth), 6);
+        // Draw Health Bar (only if alive)
+        if (this.health > 0) {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(this.x - 25, this.y - this.radius - 15, 50, 6);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(this.x - 25, this.y - this.radius - 15, 50 * (Math.max(0, this.health) / this.maxHealth), 6);
+        }
     }
 }
 
@@ -324,8 +359,12 @@ function gameLoop() {
 
     for (let i = 0; i < monsters.length; i++) {
         let m1 = monsters[i];
+        if (m1.health <= 0) continue; // Skip dead/dying units in combat detection
+        
         for (let j = 0; j < monsters.length; j++) {
             let m2 = monsters[j];
+            if (m2.health <= 0) continue; // Skip dead/dying units in combat detection
+            
             if (m1.side !== m2.side && Math.abs(m1.y - m2.y) < m1.radius + m2.radius + m1.range) {
                 m1.isFighting = true; m1.target = m2;
             }
@@ -339,7 +378,8 @@ function gameLoop() {
         m.draw();
     });
 
-    monsters = monsters.filter(m => m.health > 0);
+    // Keep units on screen if they are alive OR if they are playing their death animation
+    monsters = monsters.filter(m => m.health > 0 || !m.isDeadFinished);
     enemyPortal.draw(); playerPortal.draw();
 
     if (playerPortal.health <= 0) {
