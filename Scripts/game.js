@@ -43,21 +43,23 @@ const STATS = {
         spriteHeight: 128,
         drawWidth: 140,
         drawHeight: 140,
-        frames: { walk: 6, attack: 8, hurt: 4, death: 5 }
+        frames: { walk: 6, attack: 8, hurt: 4, death: 5 },
+        animationSpeed: 6
     },
     skeleton: {
         cost: 7, 
         hp: 50, 
         dmg: 12, 
         range: 15, 
-        speed: 0.3, 
+        speed: 0.15, 
         color: '#b0bec5', 
-        radius: 40,
+        radius: 28,
         spriteWidth: 64,
         spriteHeight: 64,
-        drawWidth: 240,
-        drawHeight: 240,
-        frames: { walk: 6, attack: 9, hurt: 4, death: 6 }
+        drawWidth: 168,
+        drawHeight: 168,
+        frames: { walk: 6, attack: 9, hurt: 4, death: 6 },
+        animationSpeed: 12
     }
 };
 
@@ -197,9 +199,9 @@ class Monster {
         // Animation & Sprite Properties
         this.state = 'walk';
         const walkFrames = base.frames.walk;
+        this.animationSpeed = base.animationSpeed || 6;
         this.frame = Math.floor(Math.random() * walkFrames); // Desynchronize initial walk frame phase
-        this.frameTimer = Math.floor(Math.random() * 6); // Desynchronize timer phase
-        this.animationSpeed = 6;
+        this.frameTimer = Math.floor(Math.random() * this.animationSpeed); // Desynchronize timer phase
         this.spriteWidth = base.spriteWidth || 64;
         this.spriteHeight = base.spriteHeight || 64;
         this.drawWidth = base.drawWidth || 40;
