@@ -549,6 +549,9 @@ function gameLoop() {
         let baseGold = Math.min(10, Math.floor(1 + state.level / 2.5));
         let flawless = playerPortal.health >= playerPortal.maxHealth;
         let goldEarned = flawless ? baseGold * 2 : baseGold;
+        if (state.level === 1) {
+            goldEarned += 10;
+        }
         state.gold += goldEarned;
         state.level++;
         saveGame();
