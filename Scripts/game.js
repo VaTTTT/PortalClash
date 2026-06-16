@@ -38,25 +38,25 @@ const STATS = {
         range: 15, 
         speed: 0.5, 
         color: '#8d6e63', 
-        radius: 30,
+        radius: 21,
         spriteWidth: 128,
         spriteHeight: 128,
-        drawWidth: 200,
-        drawHeight: 200,
+        drawWidth: 140,
+        drawHeight: 140,
         frames: { walk: 6, attack: 8, hurt: 4, death: 5 }
     },
     skeleton: {
         cost: 7, 
         hp: 50, 
         dmg: 12, 
-        range: 160, 
+        range: 15, 
         speed: 0.3, 
         color: '#b0bec5', 
-        radius: 20,
+        radius: 40,
         spriteWidth: 64,
         spriteHeight: 64,
-        drawWidth: 120,
-        drawHeight: 120,
+        drawWidth: 240,
+        drawHeight: 240,
         frames: { walk: 6, attack: 9, hurt: 4, death: 6 }
     }
 };
