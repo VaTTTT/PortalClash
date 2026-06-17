@@ -23,8 +23,8 @@ let enemyPortal, playerPortal;
 let state = {
     level: 1,
     gold: 0,
-    unlocks: { skeleton: false },
-    upgrades: { rat: 0, skeleton: 0 },
+    unlocks: { skeleton: false, zombie: false },
+    upgrades: { rat: 0, skeleton: 0, zombie: 0 },
     hpRegenLevel: 0,
     manaRegenLevel: 0
 };
@@ -44,7 +44,8 @@ const STATS = {
         drawWidth: 140,
         drawHeight: 140,
         frames: { walk: 6, attack: 8, hurt: 4, death: 5 },
-        animationSpeed: 6
+        animationSpeed: 6,
+        attackCooldown: 36
     },
     skeleton: {
         cost: 7, 
@@ -59,7 +60,24 @@ const STATS = {
         drawWidth: 168,
         drawHeight: 168,
         frames: { walk: 6, attack: 9, hurt: 4, death: 6 },
-        animationSpeed: 12
+        animationSpeed: 12,
+        attackCooldown: 60
+    },
+    zombie: {
+        cost: 15,
+        hp: 180,
+        dmg: 25,
+        range: 25,
+        speed: 0.1,
+        color: '#4caf50',
+        radius: 32,
+        spriteWidth: 64,
+        spriteHeight: 64,
+        drawWidth: 180,
+        drawHeight: 180,
+        frames: { walk: 6, attack: 10, hurt: 4, death: 9 },
+        animationSpeed: 10,
+        attackCooldown: 96
     }
 };
 
@@ -72,6 +90,12 @@ const IMAGES = {
         death: new Image()
     },
     skeleton: {
+        walk: new Image(),
+        attack: new Image(),
+        hurt: new Image(),
+        death: new Image()
+    },
+    zombie: {
         walk: new Image(),
         attack: new Image(),
         hurt: new Image(),
@@ -89,11 +113,16 @@ IMAGES.skeleton.attack.src = 'Assets/Sprites/Units/Skeleton_LVL1/Skeleton1_Attac
 IMAGES.skeleton.hurt.src = 'Assets/Sprites/Units/Skeleton_LVL1/Skeleton1_Hurt_with_shadow.png';
 IMAGES.skeleton.death.src = 'Assets/Sprites/Units/Skeleton_LVL1/Skeleton1_Death_with_shadow.png';
 
+IMAGES.zombie.walk.src = 'Assets/Sprites/Units/Zombie_LVL1/Zombie1_Walk_with_shadow.png';
+IMAGES.zombie.attack.src = 'Assets/Sprites/Units/Zombie_LVL1/Zombie1_Attack_with_shadow.png';
+IMAGES.zombie.hurt.src = 'Assets/Sprites/Units/Zombie_LVL1/Zombie1_Hurt_with_shadow.png';
+IMAGES.zombie.death.src = 'Assets/Sprites/Units/Zombie_LVL1/Zombie1_Death_with_shadow.png';
+
 let assetsLoaded = 0;
 let isSpriteLoaded = false;
 const checkAssetsLoaded = () => {
     assetsLoaded++;
-    if (assetsLoaded === 8) isSpriteLoaded = true;
+    if (assetsLoaded === 12) isSpriteLoaded = true;
 };
 
 Object.values(IMAGES).forEach(unitImgs => {
@@ -118,9 +147,9 @@ function loadGame() {
         if (saved) {
             let parsed = JSON.parse(saved);
             state = { ...state, ...parsed };
-            // Auto-migration/compatibility for Rat and Skeleton upgrades & unlocks
+            // Auto-migration/compatibility for Rat, Skeleton, and Zombie upgrades & unlocks
             if (!state.upgrades) {
-                state.upgrades = { rat: 0, skeleton: 0 };
+                state.upgrades = { rat: 0, skeleton: 0, zombie: 0 };
             } else {
                 if (state.upgrades.rat === undefined) {
                     state.upgrades.rat = state.upgrades.gray || 0;
@@ -128,11 +157,19 @@ function loadGame() {
                 if (state.upgrades.skeleton === undefined) {
                     state.upgrades.skeleton = 0;
                 }
+                if (state.upgrades.zombie === undefined) {
+                    state.upgrades.zombie = 0;
+                }
             }
             if (!state.unlocks) {
-                state.unlocks = { skeleton: false };
-            } else if (state.unlocks.skeleton === undefined) {
-                state.unlocks.skeleton = false;
+                state.unlocks = { skeleton: false, zombie: false };
+            } else {
+                if (state.unlocks.skeleton === undefined) {
+                    state.unlocks.skeleton = false;
+                }
+                if (state.unlocks.zombie === undefined) {
+                    state.unlocks.zombie = false;
+                }
             }
         }
     } catch (e) {
@@ -290,7 +327,7 @@ class Monster {
 
         if (this.state === 'attack') {
             this.attackTimer++;
-            if (this.attackTimer >= 60) {
+            if (this.attackTimer >= STATS[this.type].attackCooldown) {
                 if (this.range > 50) {
                     // Spawn projectile (Skeletal Arrow / Bolt)
                     projectiles.push(new Projectile(this.x, this.y, this.target, this.damage, 4.5, '#eceff1'));
@@ -421,6 +458,7 @@ function spawnMonster(type) {
 // In-Game UI Buttons
 document.getElementById('btn-rat').onclick = () => spawnMonster('rat');
 document.getElementById('btn-skeleton').onclick = () => spawnMonster('skeleton');
+document.getElementById('btn-zombie').onclick = () => spawnMonster('zombie');
 
 document.getElementById('btn-upgrade').onclick = () => {
     if (playerMana >= playerUpgradeCost) {
@@ -451,6 +489,14 @@ function updateUI() {
         btnSkeleton.classList.add('hidden');
     }
 
+    const btnZombie = document.getElementById('btn-zombie');
+    if (state.unlocks.zombie) {
+        btnZombie.classList.remove('hidden');
+        btnZombie.disabled = playerMana < STATS.zombie.cost;
+    } else {
+        btnZombie.classList.add('hidden');
+    }
+
     document.getElementById('btn-upgrade').disabled = playerMana < playerUpgradeCost;
 }
 
@@ -474,6 +520,7 @@ function processEnemyAI() {
     // Weighted Spawning
     let ratWeight = Math.max(20, 100 - 8 * (state.level - 1));
     let skelWeight = state.level < 3 ? 0 : Math.min(40, 15 * (state.level - 2));
+    let zombieWeight = state.level < 6 ? 0 : Math.min(40, 12 * (state.level - 5));
 
     let pool = [];
     if (enemyMana >= STATS.rat.cost) {
@@ -481,6 +528,9 @@ function processEnemyAI() {
     }
     if (enemyMana >= STATS.skeleton.cost) {
         for (let i = 0; i < skelWeight; i++) pool.push('skeleton');
+    }
+    if (enemyMana >= STATS.zombie.cost) {
+        for (let i = 0; i < zombieWeight; i++) pool.push('zombie');
     }
 
     if (pool.length > 0) {
@@ -607,6 +657,28 @@ function updateShopUI() {
         }
     }
 
+    // Zombie Unlock & Upgrades
+    const btnUnlockZombie = document.getElementById('shop-unlock-zombie');
+    const btnUpgZombie = document.getElementById('shop-upg-zombie');
+
+    if (!state.unlocks.zombie) {
+        btnUnlockZombie.classList.remove('hidden');
+        btnUpgZombie.classList.add('hidden');
+        btnUnlockZombie.innerText = "Unlock Zombie (25 Gold)";
+        btnUnlockZombie.disabled = state.gold < 25;
+    } else {
+        btnUnlockZombie.classList.add('hidden');
+        btnUpgZombie.classList.remove('hidden');
+        const lvlZombie = state.upgrades.zombie || 0;
+        if (lvlZombie >= 10) {
+            btnUpgZombie.innerText = "Zombie: Max Level"; btnUpgZombie.disabled = true;
+        } else {
+            const cost = getUpgradeCost(lvlZombie);
+            btnUpgZombie.innerText = `Upgrade Zombie [Lvl ${lvlZombie}/10] (Cost: ${cost} Gold)`;
+            btnUpgZombie.disabled = state.gold < cost;
+        }
+    }
+
     // Portal Upgrades
     const costHp = 8 * (state.hpRegenLevel + 1);
     let btnHp = document.getElementById('shop-upg-hp');
@@ -658,6 +730,26 @@ document.getElementById('shop-upg-skeleton').onclick = () => {
     }
 };
 
+document.getElementById('shop-unlock-zombie').onclick = () => {
+    if (state.gold >= 25 && !state.unlocks.zombie) {
+        state.gold -= 25;
+        state.unlocks.zombie = true;
+        saveGame();
+        updateShopUI();
+    }
+};
+
+document.getElementById('shop-upg-zombie').onclick = () => {
+    const lvl = state.upgrades.zombie || 0;
+    const cost = getUpgradeCost(lvl);
+    if (state.gold >= cost && lvl < 10) {
+        state.gold -= cost;
+        state.upgrades.zombie++;
+        saveGame();
+        updateShopUI();
+    }
+};
+
 document.getElementById('shop-upg-hp').onclick = () => {
     const cost = 8 * (state.hpRegenLevel + 1);
     if (state.gold >= cost && state.hpRegenLevel < 10) {
@@ -680,7 +772,7 @@ document.getElementById('shop-upg-mana').onclick = () => {
 
 // --- MENU LISTENERS ---
 document.getElementById('btn-new-game').onclick = () => { 
-    state = { level: 1, gold: 0, unlocks: { skeleton: false }, upgrades: { rat: 0, skeleton: 0 }, hpRegenLevel: 0, manaRegenLevel: 0 };
+    state = { level: 1, gold: 0, unlocks: { skeleton: false, zombie: false }, upgrades: { rat: 0, skeleton: 0, zombie: 0 }, hpRegenLevel: 0, manaRegenLevel: 0 };
     saveGame(); startGame(); 
 };
 document.getElementById('btn-continue').onclick = () => { loadGame(); startGame(); };
